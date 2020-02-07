@@ -60,7 +60,7 @@ function myFunction () {
   };   
   ctx.param = "World";
 
-  let result = ctx.with(function (text) {
+  ctx.with(function (text) {
     this.log.push('Inside body');
     throw Error("Error here, but does not actually error out");	
   });

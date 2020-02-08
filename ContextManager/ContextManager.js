@@ -1,6 +1,7 @@
 (function (__g__) {
   // private stuff
   const _settings_ = Symbol('settings');
+  const _state_ = Symbol('state');
 
   let parseSettings = function (opt) {
     opt = opt || {};
@@ -39,35 +40,41 @@
       this[_settings_].param = obj;
     }
 
+    set state (obj) {
+      if (obj === null)
+        this[_state_] = this.defaultObject;
+      else
+        this[_state_] = obj;
+    }
+
+    get state () {
+      return this[_state_];
+    }
+
     defaultObject () {
       return {};
     }
 
     with (func) {
-      var param, result;
+      var param, result, state;
 
-      // Create the obj that can be used as `this` throughout
-      let obj = this.defaultObject();
-      this[_settings_].enter = this[_settings_].enter.bind(obj);
-      this[_settings_].exit = this[_settings_].exit.bind(obj);
-      this[_settings_].error = this[_settings_].error.bind(obj);
-      func = func.bind(obj);
+      this[_state_] = state = this.defaultObject();
 
       // get the parameter
       param = this[_settings_].param;
 
       // execute the enter function
-      this[_settings_].enter();
+      this[_settings_].enter.call(state);
 
       try {
 
         // bind it so we can access via `this`        // execute the body
-        result = func(param);
+        result = func.call(state, param);
 
       } catch (err) {
         // execute the error handler
         // error handler can return null to indicate it should be swallowed
-        let swallow = this[_settings_].error(err) === null;
+        let swallow = this[_settings_].error.call(state, err) === null;
 
         // if error happened, call error function
         // if it returns null swallow it, otherwise reraise
@@ -77,7 +84,7 @@
       } finally {
 
         // execute the exit
-        this[_settings_].exit();
+        this[_settings_].exit.call(state);
       }
 
       return result;

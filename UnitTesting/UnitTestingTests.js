@@ -137,6 +137,12 @@ function testing_utgs() {
         assert.objectEquals({expected:{hi:'hi'}, actual:{hi:'hi'}});
       });
 
+      it("assertObjectEquals with date", function () {
+        const date = new Date();
+        assert.objectEquals({expected:{date:date}, actual:{date:date}, comment: "date embedded in object"});
+        assert.objectEquals({expected:date, actual:date, comment: "date on its own"});
+      });
+
       it("assertArrayEquals", function () {
         assert.arrayEquals({expected: ['hello', 'world'], actual: ['hello', 'world']});
       });

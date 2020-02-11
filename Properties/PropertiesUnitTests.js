@@ -69,11 +69,8 @@ function test_Properties() {
       const expected = {arr: [1, 2, 4.3343433, "five"], obj: {prop:'prop', date: new Date()}};
       lib.removeAll();
       lib.setProperties(expected);
-      const keys = lib.getKeys();
-      var actual = {};
-      for (let key of keys) {
-        actual[key] = lib.get(key);
-      }
+      //const keys = lib.getKeys();
+      const actual = lib.getAll();
       assert.objectEquals({actual: actual, expected:expected});
     });
 

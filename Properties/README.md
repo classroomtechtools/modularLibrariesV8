@@ -81,3 +81,22 @@ If you using the serializer for convenience, but don't want the performance pena
 ```js
 Properties.utils.serializer({obj:'some value'}, false);
 ```
+
+## Unit Tests
+
+To run them yourself, copy the code in this repo `UnitTests/UnitTesting.js` and add to project. Also add `Properties/PropertiesUnitTests.js` and then run `test_Properties` function. Logger output:
+
+```
+initializaion via static methods
+	✔ initialize via three modes: script, user, and document stores
+	✔ initing with date: false stores dates as ISO strings
+	✔ initing with jsons: false but dates: true throws error
+	✔ utils.serialize and utils.deseralize persists dates correctly with defaults
+
+getting and setting values
+	✔ get and set persists jsons by default
+	✔ get and set persists strings with jsons = false
+	✔ trying to persist non-strings with jsons = false throws error
+	✔ .setProperties with an nested object with nested arrays, primitives, objects, and dates, and persists
+
+```

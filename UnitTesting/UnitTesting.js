@@ -6,16 +6,7 @@
   }
 
   var _log = [];
-
-  /**
-   * log: Log stuff
-   *
-   *
-   */
-  log = function () {
-    var str = arguments[0];
-    var obj = arguments[1];
-
+  log = function (str) {
     _log.push(str);
   };
 
@@ -28,24 +19,25 @@
   var UtgsUnit_UNDEFINED_VALUE;
 
   /**
-  * Whether or not the current test page has been (completely) loaded yet
-  */
-  var isTestPageLoaded = false;
-
-  /**
   * Predicate used for testing JavaScript == (i.e. equality excluding type)
   */
-  UtgsUnit.DOUBLE_EQUALITY_PREDICATE = function(var1, var2) {return var1 == var2;};
+  UtgsUnit.DOUBLE_EQUALITY_PREDICATE = (var1, var2) =>  var1 == var2;
 
   /**
   * Predicate used for testing JavaScript === (i.e. equality including type)
   */
-  UtgsUnit.TRIPLE_EQUALITY_PREDICATE = function(var1, var2) {return var1 === var2;};
+  UtgsUnit.TRIPLE_EQUALITY_PREDICATE = (var1, var2) => var1 === var2;
+
+  /*
+  * Predicate used for testing Javascript date equality
+  */
+  UtgsUnit.DATE_EQUALITY_PREDICATE = (var1, var2) => var1.getTime() === var2.getTime();
+
 
   /**
   * Predicate used for testing whether two obects' toStrings are equal
   */
-  UtgsUnit.TO_STRING_EQUALITY_PREDICATE = function(var1, var2) {return var1.toString() === var2.toString();};
+  UtgsUnit.TO_STRING_EQUALITY_PREDICATE = (var1, var2) => var1.toString() === var2.toString();
 
   /**
   * Hash of predicates for testing equality by primitive type
@@ -54,7 +46,7 @@
     'String':   UtgsUnit.DOUBLE_EQUALITY_PREDICATE,
     'Number':   UtgsUnit.DOUBLE_EQUALITY_PREDICATE,
     'Boolean':  UtgsUnit.DOUBLE_EQUALITY_PREDICATE,
-    'Date':     UtgsUnit.TRIPLE_EQUALITY_PREDICATE,
+    'Date':     UtgsUnit.DATE_EQUALITY_PREDICATE,
     'RegExp':   UtgsUnit.TO_STRING_EQUALITY_PREDICATE,
     'Function': UtgsUnit.TO_STRING_EQUALITY_PREDICATE
   }
@@ -99,7 +91,7 @@
               result = 'Function';
               break;
             default:
-              var m = something.constructor.toString().match(/function\s*([^( ]+)\(/);
+              const m = something.constructor.toString().match(/function\s*([^( ]+)\(/);
               if (m)
                 result = m[1];
               else
@@ -115,34 +107,28 @@
   }
 
   UtgsUnit.displayStringForValue = function(aVar) {
-    var result = '<' + aVar + '>';
+    let result = `<${aVar}>`;
     if (!(aVar === null || aVar === UtgsUnit_UNDEFINED_VALUE)) {
-      result += ' (' + UtgsUnit.trueTypeOf(aVar) + ')';
+      result += ` (${UtgsUnit.trueTypeOf(aVar)})`;
     }
     return result;
   }
 
   UtgsUnit.validateArguments = function(opt, fields) {
     fields = fields.split(' ');
-    for (var f=0; f < fields.length; f++) {
+    for (let f=0; f < fields.length; f++) {
       if (!opt.hasOwnProperty(fields[f])) {
-        throw UtgsUnit.AssertionArgumentError("Assertions needs property " + fields[f] + " in opt argument");
+        throw UtgsUnit.AssertionArgumentError(`Assertions needs property ${fields[f]} in opt argument`);
       }
     }
     opt.comment = opt.comment || '';
   }
 
-  UtgsUnit.checkEquals = function(var1, var2) {
-    return var1 === var2;
-  }
+  UtgsUnit.checkEquals = (var1, var2) => var1 === var2;
 
-  UtgsUnit.checkNotUndefined = function(aVar) {
-    return aVar !== UtgsUnit_UNDEFINED_VALUE;
-  }
+  UtgsUnit.checkNotUndefined = (aVar) => aVar !== UtgsUnit_UNDEFINED_VALUE;
 
-  UtgsUnit.checkNotNull = function(aVar) {
-    return aVar !== null;
-  }
+  UtgsUnit.checkNotNull = (aVar) => aVar !== null;
 
   /**
   * All assertions ultimately go through this method.
@@ -178,10 +164,10 @@
     */
     // this.stackTrace = UtgsUnit.Util.getStackTrace();
 
-    var failComment = '';
-    if (comment != null) failComment = 'Comment: '+comment;
-    message.__print__;
-    throw Error(failComment +'\n\t\t  -- Failure: '+ message + '\n    ');
+    let failComment = '';
+    if (comment != null) failComment = `Comment: ${comment}`;
+    message = message || '';
+    throw Error(`${failComment}\n\t\t -- Failure: ${message}\n    `);
   }
 
 
@@ -196,7 +182,7 @@
     * A description of the argument error
     */
     this.description = description;
-    throw Error('Argument error: '+ description);
+    throw Error(`Argument error: ${description}`);
   }
 
 
@@ -218,7 +204,7 @@
   * @param html
   */
   UtgsUnit.Util.standardizeHTML = function(html) {
-    var translator = document.createElement("DIV");
+    let translator = document.createElement("DIV");
     translator.innerHTML = html;
     return UtgsUnit.Util.trim(translator.innerHTML);
   }
@@ -232,31 +218,11 @@
   }
 
   /**
-  * Implemented here because the JavaScript Array.push(anObject) and Array.pop() functions are not available in IE 5.0
-  * @param anArray the array onto which to push
-  * @param anObject the object to push onto the array
-  */
-  UtgsUnit.Util.push = function(anArray, anObject) {
-    anArray[anArray.length] = anObject;
-  }
-
-  /**
-  * Implemented here because the JavaScript Array.push(anObject) and Array.pop() functions are not available in IE 5.0
-  * @param anArray the array from which to pop
-  */
-  UtgsUnit.Util.pop = function pop(anArray) {
-    if (anArray.length >= 1) {
-      delete anArray[anArray.length - 1];
-      anArray.length--;
-    }
-  }
-
-  /**
   * Returns the name of the given function, or 'anonymous' if it has no name
   * @param aFunction
   */
   UtgsUnit.Util.getFunctionName = function(aFunction) {
-    var regexpResult = aFunction.toString().match(/function(\s*)(\w*)/);
+    const regexpResult = aFunction.toString().match(/function(\s*)(\w*)/);
     if (regexpResult && regexpResult.length >= 2 && regexpResult[2]) {
       return regexpResult[2];
     }
@@ -267,13 +233,13 @@
   * Returns the current stack trace
   */
   UtgsUnit.Util.getStackTrace = function() {
-    var result = '';
+    let result = '';
 
-    if (typeof(arguments.caller) != 'undefined') { // IE, not ECMA
-      for (var a = arguments.caller; a != null; a = a.caller) {
-        result += '> ' + UtgsUnit.Util.getFunctionName(a.callee) + '\n';
+    if (arguments.caller !== undefined) {
+      for (let a = arguments.caller; a != null; a = a.caller) {
+        result += `> ${UtgsUnit.Util.getFunctionName(a.callee)}\n`;
         if (a.caller == a) {
-          result += '*';
+          result += `*`;
           break;
         }
       }
@@ -286,10 +252,10 @@
       }
       catch(exception)
       {
-        var stack = UtgsUnit.Util.parseErrorStack(exception);
-        for (var i = 1; i < stack.length; i++)
+        const stack = UtgsUnit.Util.parseErrorStack(exception);
+        for (let i = 1; i < stack.length; i++)
         {
-          result += '> ' + stack[i] + '\n';
+          result += `> ${stack[i]}\n`;
         }
       }
     }
@@ -302,19 +268,18 @@
   * @param exception
   */
   UtgsUnit.Util.parseErrorStack = function(exception) {
-    var stack = [];
-    var name;
+    let stack = [];
 
     if (!exception || !exception.stack) {
       return stack;
     }
 
-    var stacklist = exception.stack.split('\n');
+    const stacklist = exception.stack.split('\n');
 
-    for (var i = 0; i < stacklist.length - 1; i++) {
-      var framedata = stacklist[i];
+    for (let i = 0; i < stacklist.length - 1; i++) {
+      const framedata = stacklist[i];
 
-      name = framedata.match(/^(\w*)/)[1];
+      let name = framedata.match(/^(\w*)/)[1];
       if (!name) {
         name = 'anonymous';
       }
@@ -337,10 +302,10 @@
     if (string == null)
       return null;
 
-    var startingIndex = 0;
-    var endingIndex = string.length - 1;
+    let startingIndex = 0;
+    let endingIndex = string.length - 1;
 
-    var singleWhitespaceRegex = /\s/;
+    const singleWhitespaceRegex = /\s/;
     while (string.substring(startingIndex, startingIndex + 1).match(singleWhitespaceRegex))
       startingIndex++;
 
@@ -354,9 +319,9 @@
   }
 
   UtgsUnit.Util.getKeys = function(obj) {
-    var keys = [];
-    for (var key in obj) {
-      UtgsUnit.Util.push(keys, key);
+    let keys = [];
+    for (const key in obj) {
+      keys.push(key);
     }
     return keys;
   }
@@ -386,7 +351,7 @@
     */
     equals: function (opt) {
       UtgsUnit.validateArguments(opt, 'expected actual');
-      UtgsUnit.assert(opt.comment, UtgsUnit.checkEquals(opt.expected, opt.actual), 'Expected {0.expected} but was {0.actual}'.__format__(opt));
+      UtgsUnit.assert(opt.comment, UtgsUnit.checkEquals(opt.expected, opt.actual), `Expected ${opt.expected} but was ${opt.actual}`);
     },
 
 
@@ -399,7 +364,7 @@
     */
     assert: function (opt) {
         UtgsUnit.validateArguments(opt, 'actual');
-        if (typeof(opt.actual) != 'boolean')
+        if (typeof(opt.actual) !== 'boolean')
             throw new UtgsUnit.AssertionArgumentError('Bad argument to assert(boolean)');
 
         UtgsUnit.assert(opt.comment, opt.actual === true, 'Call to assert(boolean) with false');
@@ -424,7 +389,7 @@
     false_: function (opt) {
         UtgsUnit.validateArguments(opt, 'actual');
 
-        if (typeof(opt.actual) != 'boolean')
+        if (typeof(opt.actual) !== 'boolean')
             throw new UtgsUnit.AssertionArgumentError('Bad argument to false_(boolean)');
 
         UtgsUnit.assert(opt.comment, opt.actual === false, 'Call to false_(boolean) with true');
@@ -440,7 +405,7 @@
     */
     notEqual: function (opt) {
         UtgsUnit.validateArguments(opt, 'expected actual');
-        UtgsUnit.assert(opt.comment, opt.expected !== opt.actual, 'Expected not to be {0.expected}'.__format__(opt));
+        UtgsUnit.assert(opt.comment, opt.expected !== opt.actual, `Expected not to be ${opt.expected}`);
     },
 
     /**
@@ -451,7 +416,7 @@
     */
     null_: function (opt) {
         UtgsUnit.validateArguments(opt, 'actual');
-        UtgsUnit.assert(opt.comment, opt.actual === null, 'Expected ' + UtgsUnit.displayStringForValue(null) + ' but was {0.actual}'.__format__(opt));
+        UtgsUnit.assert(opt.comment, opt.actual === null, `Expected ${UtgsUnit.displayStringForValue(null)} but was ${opt.actual}`);
     },
 
     /**
@@ -462,7 +427,7 @@
     */
     notNull: function(opt) {
       UtgsUnit.validateArguments(opt, 'actual');
-      UtgsUnit.assert(opt.comment, UtgsUnit.checkNotNull(opt.actual), 'Expected not to be ' + UtgsUnit.displayStringForValue(null));
+      UtgsUnit.assert(opt.comment, UtgsUnit.checkNotNull(opt.actual), `Expected not to be ${UtgsUnit.displayStringForValue(null)}`);
     },
 
     /**
@@ -473,7 +438,7 @@
     */
     undefined_: function (opt) {
         UtgsUnit.validateArguments(opt, 'actual');
-        UtgsUnit.assert(opt.comment, opt.actual === UtgsUnit_UNDEFINED_VALUE, 'Expected ' + UtgsUnit.displayStringForValue(UtgsUnit_UNDEFINED_VALUE) + ' but was ' + UtgsUnit.displayStringForValue(opt.actual));
+        UtgsUnit.assert(opt.comment, opt.actual === UtgsUnit_UNDEFINED_VALUE, `Expected ${UtgsUnit.displayStringForValue(UtgsUnit_UNDEFINED_VALUE)} but was ${UtgsUnit.displayStringForValue(opt.actual)}`);
     },
 
     /**
@@ -484,7 +449,7 @@
     */
     notUndefined: function (opt) {
       UtgsUnit.validateArguments(opt, 'actual');
-      UtgsUnit.assert(opt.comment, UtgsUnit.checkNotUndefined(opt.actual), 'Expected not to be ' + UtgsUnit.displayStringForValue(UtgsUnit_UNDEFINED_VALUE));
+      UtgsUnit.assert(opt.comment, UtgsUnit.checkNotUndefined(opt.actual), `Expected not to be ${UtgsUnit.displayStringForValue(UtgsUnit_UNDEFINED_VALUE)}`);
     },
 
     /**
@@ -522,30 +487,29 @@
         if (opt.expected === opt.actual)
             return;
 
-        var isEqual = false;
+        let isEqual = false;
 
-        var typeOfVar1 = UtgsUnit.trueTypeOf(opt.expected);
-        var typeOfVar2 = UtgsUnit.trueTypeOf(opt.actual);
-
+        const typeOfVar1 = UtgsUnit.trueTypeOf(opt.expected);
+        const typeOfVar2 = UtgsUnit.trueTypeOf(opt.actual);
         if (typeOfVar1 == typeOfVar2) {
-            var primitiveEqualityPredicate = UtgsUnit.PRIMITIVE_EQUALITY_PREDICATES[typeOfVar1];
+            const primitiveEqualityPredicate = UtgsUnit.PRIMITIVE_EQUALITY_PREDICATES[typeOfVar1];
             if (primitiveEqualityPredicate) {
                 isEqual = primitiveEqualityPredicate(opt.expected, opt.actual);
             } else {
-                var expectedKeys = UtgsUnit.Util.getKeys(opt.expected).sort().join(", ");
-                var actualKeys = UtgsUnit.Util.getKeys(opt.actual).sort().join(", ");
+                const expectedKeys = UtgsUnit.Util.getKeys(opt.expected).sort().join(", ");
+                const actualKeys = UtgsUnit.Util.getKeys(opt.actual).sort().join(", ");
                 if (expectedKeys != actualKeys) {
-                    UtgsUnit.assert(opt.comment, false, 'Expected keys "' + expectedKeys + '" but found "' + actualKeys + '"');
+                    UtgsUnit.assert(opt.comment, false, `Expected keys ${expectedKeys} but found ${actualKeys}`);
                 }
-                for (var i in opt.expected) {
-                  this.objectEquals({comment: opt.comment + ' found nested ' + typeOfVar1 + '@' + i + '\n',
+                for (const i in opt.expected) {
+                  this.objectEquals({comment: `{opt.comment} nested ${typeOfVar1} key ${i}\n`,
                                            expected:opt.expected[i],
                                            actual:opt.actual[i]});
                 }
                 isEqual = true;
             }
         }
-        UtgsUnit.assert(opt.comment, isEqual, 'Expected ' + UtgsUnit.displayStringForValue(opt.expected) + ' but was ' + UtgsUnit.displayStringForValue(opt.actual));
+        UtgsUnit.assert(opt.comment, isEqual, `Expected ${UtgsUnit.displayStringForValue(opt.expected)} but was ${UtgsUnit.displayStringForValue(opt.actual)}`);
     },
 
     /**
@@ -602,16 +566,16 @@
     */
     hashEquals: function (opt) {
       UtgsUnit.validateArguments(opt, 'actual expected');
-      for (var key in opt.expected) {
-        this.notUndefined({comment: "Expected hash had key " + key + " that was not found in actual",
+      for (const key in opt.expected) {
+        this.notUndefined({comment: `Expected hash had key ${key} that was not found in actual`,
                                  actual:opt.actual[key]});
-        this.equals({comment:"Value for key " + key + " mismatch - expected = " + opt.expected[key] + ", actual = " + opt.actual[key],
+        this.equals({comment:`Value for key ${key} mismatch -- expected = ${opt.expected[key]}, actual = ${opt.actual[key]}`,
                            expected:opt.expected[key],
                            actual:opt.actual[key]}
                          );
       }
       for (var key in opt.actual) {
-        this.notUndefined({comment:"Actual hash had key " + key + " that was not expected", actual:opt.expected[key]});
+        this.notUndefined({comment:`Actual hash had key ${key} that was not expected`, actual:opt.expected[key]});
       }
     },
 
@@ -626,7 +590,7 @@
     */
     roughlyEquals: function (opt) {
       UtgsUnit.validateArguments(opt, 'actual expected tolerance');
-      this.true_({comment: "Expected " + opt.expected + ", but got " + opt.actual + " which was more than " + opt.tolerance + " away",
+      this.true_({comment: `Expected ${opt.expected} but got ${opt.actual} which was more than ${opt.tolerance}  away`,
                        actual:Math.abs(opt.expected - opt.actual) < opt.tolerance});
     },
 
@@ -640,7 +604,7 @@
     */
     contains: function (opt) {
       UtgsUnit.validateArguments(opt, 'value collection');
-      this.true_({comment: "Expected '{0.collection}' to contain '{0.value}'".__format__(opt),
+      this.true_({comment: `Expected ${opt.collection} to contain ${opt.value}`,
                        actual: opt.collection.indexOf(opt.value) != -1});
     },
 
@@ -655,8 +619,8 @@
     arrayEqualsIgnoringOrder: function(opt) {
         UtgsUnit.validateArguments(opt, 'expected actual');
 
-        var notEqualsMessage = "Expected arrays {0.expected} and {0.actual} to be equal (ignoring order)".__format__(opt);
-        var notArraysMessage = "Expected arguments {0.expected} and {0.actual} to be arrays".__format__(opt);
+        const notEqualsMessage = `Expected arrays ${opt.expected} and ${opt.actual} to be equal (ignoring order)`;
+        const notArraysMessage = `Expected arguments ${opt.expected} and ${opt.actual} to be arrays`;
 
         UtgsUnit.assert(opt.comment, UtgsUnit.checkNotNull(opt.expected), notEqualsMessage);
         UtgsUnit.assert(opt.comment, UtgsUnit.checkNotNull(opt.actual), notEqualsMessage);
@@ -668,9 +632,9 @@
 
         UtgsUnit.assert(opt.comment, UtgsUnit.checkEquals(opt.expected.length, opt.actual.length), notEqualsMessage);
 
-        for (var i = 0; i < opt.expected.length; i++) {
-            var found = false;
-            for (var j = 0; j < opt.actual.length; j++) {
+        for (let i = 0; i < opt.expected.length; i++) {
+            let found = false;
+            for (let j = 0; j < opt.actual.length; j++) {
                 try {
                   this.objectEquals({comment: notEqualsMessage,
                                            expected:opt.expected[i],
@@ -686,13 +650,13 @@
     throws: function (opt, func) {
       UtgsUnit.validateArguments(opt, 'expectedError');
       if (typeof(func) !== 'function') throw UtgsUnit.Failure("Must have function");
-      var caughtError = false;
+      let caughtError = false;
 
       try {
         func.call();
       } catch (err) {
         caughtError = true;
-        UtgsUnit.assert(opt.comment, err instanceof opt.expectedError, "Expected thrown error to be of type " + (opt.expectedError.name || opt.expectedError.toString()));
+        UtgsUnit.assert(opt.comment, err instanceof opt.expectedError, `Expected thrown error to be of type ${(opt.expectedError.name || opt.expectedError.toString())}`);
       }
 
       if (!caughtError)
@@ -710,15 +674,15 @@
       }
     },
 
+    /* TODO: Fix the use of assert.result */
     throwsError: function (comment, func) {
-      var saved, ret;
-      saved = assert.result;
+      const saved = assert.result;
 
       if (arguments.length == 1) {
         func = comment;
         comment = '';
       }
-      ret = this.throws.call(this, {expectedError:Error}, func);
+      let ret = this.throws.call(this, {expectedError:Error}, func);
       if (assert.result == false && saved == true) {
         assert.result = true;
       }
@@ -821,24 +785,24 @@
 
      static init () {
        //  ValueError :: String -> Error
-       var ValueError = function(message) {
+       const ValueError = function(message) {
          var err = new Error(message);
          err.name = 'ValueError';
          return err;
        };
 
        //  defaultTo :: a,a? -> a
-       var defaultTo = function(x, y) {
+       const defaultTo = function(x, y) {
          return y == null ? x : y;
        };
 
        //  create :: Object -> String,*... -> String
-       var create = function() {
+       const create = function() {
 
          return function(template) {
-           var args = Array.prototype.slice.call(arguments, 1);
-           var idx = 0;
-           var state = 'UNDEFINED';
+           const args = Array.prototype.slice.call(arguments, 1);
+           let idx = 0;
+           let state = 'UNDEFINED';
 
            return template.replace(
              /([{}])\1|[{](.*?)(?:!(.+?))?[}]/g,
@@ -861,9 +825,9 @@
                  key = String(idx);
                  idx += 1;
                }
-               var value = lookup(args, key.split('.'));
+               const value = lookup(args, key.split('.'));
                if (xf == null) {
-                 return '<' + value + '> (' + typeof value + ')';
+                 return `<${value}> (${typeof value})`;
                } else if (Object.prototype.hasOwnProperty.call({}, xf)) {
                  return config.transformers[xf](value);
                } else {
@@ -874,12 +838,12 @@
          };
        };
 
-       var lookup = function(obj, path) {
+       const lookup = function(obj, path) {
          if (!/^\d+$/.test(path[0])) {
            path = ['0'].concat(path);
          }
-         for (var idx = 0; idx < path.length; idx += 1) {
-           var key = path[idx];
+         for (let idx = 0; idx < path.length; idx += 1) {
+           const key = path[idx];
            if (typeof obj[key] === 'function')
              obj = obj[key]();
            else
@@ -892,7 +856,7 @@
 
          Object.defineProperty(String.prototype, '__format__', {
            get: function () {
-             var $format = create({});
+             const $format = create({});
              return function () {
                var args = Array.prototype.slice.call(arguments);
                args.unshift(this);

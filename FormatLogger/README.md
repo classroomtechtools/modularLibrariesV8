@@ -7,7 +7,7 @@ Make templated strings and log output with apps scripting a cinch.
 Copy and paste the code, initialize so that it is live. This augments the String.prototype and Object.prototype, and adds `__log__` to the global scope.
 
 ```js
-Import.FormatLogger.init();
+FormatLogger.init();
 const greeting = 'Hello';
 const noun = 'World';
 __log__`${greeting}, ${noun}.`

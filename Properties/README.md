@@ -6,11 +6,11 @@ Unit tests have all the gory details.
 
 ## Motivation
 
-The `PropertyServices` is one of easiest and best ways to maintain persistent state, such as application state or user preferences. Why not make it even easier?
+AppsScripts' `PropertyServices` is one of easiest and best ways to maintain persistent state, such as application state or user preferences. Why not make it even easier?
 
 ## Quickstart
 
-Copy the code into you project, use it:
+Copy the code in `Properties.js` into you project, use it:
 
 ```js
 // initialize available stores, with sensible default values
@@ -81,6 +81,7 @@ If you using the serializer for convenience, but don't want the performance pena
 ```js
 Properties.utils.serializer({obj:'some value'}, false);
 ```
+<<<<<<< HEAD
 
 ## Unit Tests
 

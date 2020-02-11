@@ -1,6 +1,5 @@
 function test_Properties() {
   UnitTesting.init();
-  FormatLogger.init();
 
   describe("initializaion via static methods", function () {
 
@@ -14,7 +13,22 @@ function test_Properties() {
       assert.notUndefined({actual: actual});
     });
 
-    it("utils.serialize and utils.deseralize persists dates correctly", function () {
+    it("initing with date: false stores dates as ISO strings", function () {
+      const lib = Properties.userStore({dates:false});
+      const expected = new Date();
+      lib.set('date', expected);
+      const actual = lib.get('date');
+      assert.objectEquals({actual: actual, expected:expected.toISOString()});
+    });
+
+    it("initing with jsons: false but dates: true throws error", function () {
+      assert.throwsError(function () {
+        const lib = Properties.userStore({jsons: false, dates: true});
+      });
+    });
+
+
+    it("utils.serialize and utils.deseralize persists dates correctly with defaults", function () {
       const expected = {date: new Date()};
       const serialized = Properties.utils.serialize(expected);
       const actual = Properties.utils.deserialize(serialized);
@@ -51,7 +65,7 @@ function test_Properties() {
     });
 
     it(".setProperties with an nested object with nested arrays, primitives, objects, and dates, and persists", function () {
-      const lib = Properties.scriptStore({});
+      const lib = Properties.scriptStore({jsons: true, dates: true});
       const expected = {arr: [1, 2, 4.3343433, "five"], obj: {prop:'prop', date: new Date()}};
       lib.removeAll();
       lib.setProperties(expected);

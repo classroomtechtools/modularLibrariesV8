@@ -4,12 +4,18 @@
   function configure(config) {
     config = config || {jsons:true};
     config.jsons = config.jsons == undefined ? true : config.jsons;
-    config.dates = config.dates == undefined ? true : config.dates;
+    config.dates = config.dates == undefined ? false : config.dates;
+    if (config.dates && !config.jsons) throw Error("jsons needs to be true for dates: true to be meaningful");
     if (Object.keys(config).length > 2) throw Error(`Unknown property: ${Object.keys(config)}`);
     return config;
   }
 
   class Utils {
+
+    constructor (dates=true) {
+      this.dates = dates;
+    }
+
     static isSerializedDate(dateValue) {
       // Dates are serialized in TZ format, example: '1981-12-20T04:00:14.000Z'.
       const datePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
@@ -46,13 +52,18 @@
       return value;
     }
 
-    static serialize(value) {
-      value.__print__;
-      return JSON.stringify(value, Utils.dateReplacer);
+    static serialize(value, dates=true) {
+      /*
+      if (dates)
+        return JSON.stringify(value, Utils.dateReplacer);  // replacer not strictly required and is faster without
+      */
+      return JSON.stringify(value);
     }
 
-    static deserialize(value) {
-      return JSON.parse(value, Utils.dateReviver);
+    static deserialize(value, dates=true) {
+      if (dates)
+        return JSON.parse(value, Utils.dateReviver);
+      return JSON.parse(value);
     }
 
   }
@@ -77,26 +88,36 @@
     }
 
     static get utils () {
+      // return serialiser who knows what to do with dates, if on
       return Utils;
     }
 
     set (key, value) {
-      if (this[_config_].jsons) value = JSON.stringify(value);
+      if (this[_config_].jsons) value = Properties.utils.serialize(value, this[_config_].dates);
       else if (typeof value !== 'string') throw TypeError("non-string passed, turn on jsons?");
       return this.instance.setProperty(key, value);
     }
 
     get (key) {
-      let ret = this.instance.getProperty(key);
-      if (ret === null || ret === undefined) return null;  // always return null when not present (or undefined?)
+      let value = this.instance.getProperty(key);
+      if (value === null || value === undefined) return null;  // always return null when not present (or undefined?)
       if (this[_config_].jsons) {
-        ret = JSON.parse(ret, Utils.dateReviver);
+        value = Properties.utils.deserialize(value, this[_config_].dates);
       }
-      return ret;
+      return value;
     }
 
     getKeys () {
       return this.instance.getKeys();
+    }
+
+    getAll () {
+      const keys = this.getKeys();
+      let properties = {};
+      for (let key of keys) {
+        properties[key] = this.get(key);
+      }
+      return properties;
     }
 
     setProperties (properties) {
@@ -104,7 +125,7 @@
       var copied = {};
       if (this[_config_].jsons) {
         for (let key in properties) {
-          copied[key] = JSON.stringify(properties[key]);
+          copied[key] = Properties.utils.serialize(properties[key], this[_config_].dates);
         }
       }
       return this.instance.setProperties(copied);

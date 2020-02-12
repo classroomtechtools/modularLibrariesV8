@@ -1,6 +1,6 @@
 # Properties
 
-Makes using `PropertyServices` in Google Apps Scripting a cinch. Can handle objects and includes serialization and deseralization techniques for dates. 
+Makes using `PropertyServices` in Google Apps Scripting a cinch. Can handle objects and maintains date values.
 
 Unit tests have all the gory details.
 
@@ -65,9 +65,9 @@ But initing the library like this is nonsensical and will throw an error:
 const lib = Properties.scriptStore({jsons: false, dates: true});
 ```
 
-## Serializer
+## De-serializer
 
-Internally it uses a simple utility to ensure that dates are stored and retrieved properly, including timestamp info. It's also exposed via `utils` property:
+Internally it uses a simple utility to ensure that dates are stored and retrieved properly. This functionality is also exposed via `utils` property:
 
 ```js
 const date = new Date();
@@ -81,7 +81,6 @@ If you using the serializer for convenience, but don't want the performance pena
 ```js
 Properties.utils.serializer({obj:'some value'}, false);
 ```
-<<<<<<< HEAD
 
 ## Unit Tests
 

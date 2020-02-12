@@ -81,7 +81,6 @@ If you using the serializer for convenience, but don't want the performance pena
 ```js
 Properties.utils.serializer({obj:'some value'}, false);
 ```
-<<<<<<< HEAD
 
 ## Unit Tests
 

@@ -18,6 +18,9 @@
    Logger`Outputs to spreadsheet`;
    // objects passed to Logger.log are pretty printed
    Logger.log({hi: 'hi', arr: ['wow', 234343]});
+   // optionally, use Logger as template tag
+   const where = 'spreadsheet';
+   Logger`this will also output to ${where}`;
 
  */
 

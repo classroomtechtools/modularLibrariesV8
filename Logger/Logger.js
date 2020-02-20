@@ -9,19 +9,27 @@
  * PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
- * To use:
+ 1) Requires V8 runtime
+ 2) Copy and paste code into project
+ 3) When you call to `ReplaceLogger()` any subsequent calls to Logger.log will go to spreadsheet instead, much quicker
+ 4) View the log which will output the url of the spreadsheet created / used
+ 5) Same spreadsheet is reused on suqsequent runs
+ 6) If you want to specify which spreadsheet to output logs to:
+    ReplaceLogger(id='<id>');
+    Optionally also provide tab name:
+    ReplaceLogger(id='<id>', sheet='<sheetname>');
+ 
+ * Details:
    // Copy and paste code into project. (Why not make it a proper library? Because to make it a drop-in replacement, needs to have access to global scope, which a library doesn't)
    ReplaceLogger()
    // use Logger.log as normal
    Logger.log('Outputs to spreadsheet');
-   // use Logger as a string literal template
-   Logger`Outputs to spreadsheet`;
    // objects passed to Logger.log are pretty printed
    Logger.log({hi: 'hi', arr: ['wow', 234343]});
-   // optionally, use Logger as template tag
+   // optionally, use Logger and string literals
    const where = 'spreadsheet';
    Logger`this will also output to ${where}`;
-
+  
  */
 
 (function (__g__) {
@@ -78,8 +86,8 @@
     ssObj.prepend(text);
   };
   
-  __g__.ReplaceLogger = function (config={}) {
-    [state.id = null, state.sheet = 'Sheet1'] = [config.id, config.sheet];
+  __g__.ReplaceLogger = function (id=null, sheet='Sheet1') {
+    [state.id, state.sheet] = [id, sheet];
     
     if (state.id === null) {
       // pull in from properties, if avialable, remains null if not

@@ -1,6 +1,6 @@
 # VerboseErrors
 
-Custom errors in the Google AppsScript online editor, made a cinch.
+Errors that tell us more about what's happening in Google Apps Script's online editor, made a cinch.
 
 ## Tutorial
 

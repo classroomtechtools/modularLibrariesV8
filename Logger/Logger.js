@@ -11,28 +11,31 @@
 
  1) Requires V8 runtime
  2) Copy and paste code into project
- 3) When you call to `ReplaceLogger()` any subsequent calls to Logger.log will go to spreadsheet instead, much quicker
+ 3) When auto is true, Logger.log will go to spreadsheet instead, much quicker
+    * optionally set auto to false and use ReplaceLogger()
  4) View the log which will output the url of the spreadsheet created / used
  5) Same spreadsheet is reused on suqsequent runs
- 6) If you want to specify which spreadsheet to output logs to:
+ 6) If you want to specify which spreadsheet to output logs to, set auto to false and:
     ReplaceLogger(id='<id>');
     Optionally also provide tab name:
     ReplaceLogger(id='<id>', sheet='<sheetname>');
- 
+
  * Details:
-   // Copy and paste code into project. (Why not make it a proper library? Because to make it a drop-in replacement, needs to have access to global scope, which a library doesn't)
-   ReplaceLogger()
-   // use Logger.log as normal
+   // Copy and paste code into project. (Why not make it a proper library? Because to make it a drop-in replacement, it needs to have access to the global scope, which a library doesn't have)
+   // use Logger.log as normal (when auto is true, else you need call to ReplaceLogger)
    Logger.log('Outputs to spreadsheet');
    // objects passed to Logger.log are pretty printed
    Logger.log({hi: 'hi', arr: ['wow', 234343]});
    // optionally, use Logger and string literals
    const where = 'spreadsheet';
    Logger`this will also output to ${where}`;
-  
+
  */
 
 (function (__g__) {
+
+  // This will replace Logger. If set to false, you'll have to initialize the library with call to ReplaceLogger()
+  const auto = true;
 
   class SS {
     constructor (id=null, sheetName) {
@@ -44,7 +47,7 @@
       else
         this.open();
     }
-    
+
     create() {
       const [rows, cols] = [3, 2];
       this.spreadsheet = SpreadsheetApp.create('Logger', rows, cols);
@@ -52,13 +55,13 @@
       this.id = this.spreadsheet.getId();
       this.sheet.getRange(1, 1, 1, 2).setValues([['Output', 'Date']]);
     }
-    
+
     open() {
       this.spreadsheet = SpreadsheetApp.openById(this.id);
       this.sheet = this.spreadsheet.getSheetByName(this.sheetName);
       this.id = this.spreadsheet.getId();
     }
-    
+
     prepend(text) {
       const data = [
         [JSON.stringify(text, null, 4), (new Date()).toISOString()]
@@ -66,16 +69,16 @@
       this.sheet.insertRowsAfter(1, data.length);
       this.sheet.getRange(2, 1, data.length, data[0].length).setValues(data);
     }
-    
+
     get url () {
       return this.spreadsheet.getUrl();
     }
-    
+
   }
 
   let ssObj = null;
   const state = {};
-  
+
   const __Logger__ = __g__.Logger;
 
   Logger_ = function (strings, ...values) {
@@ -85,14 +88,14 @@
   Logger_.log = function (text) {
     ssObj.prepend(text);
   };
-  
+
   __g__.ReplaceLogger = function (id=null, sheet='Sheet1') {
     [state.id, state.sheet] = [id, sheet];
-    
+
     if (state.id === null) {
       // pull in from properties, if avialable, remains null if not
       const props = PropertiesService.getUserProperties();
-      state.id = props.getProperty('__getLogger__.id');      
+      state.id = props.getProperty('__getLogger__.id');
     }
 
     // either opens existing or creates new
@@ -109,8 +112,10 @@
     Logger.log(`\n${ssObj.url}\n`);
     __g__.Logger = Logger_;
   };
-  
+
   __g__.UnreplaceLogger = function () {
     __g__.Logger = __Logger__;
   };
+
+  if (auto) ReplaceLogger();
 })(this);

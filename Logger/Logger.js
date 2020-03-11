@@ -54,12 +54,18 @@
       this.sheet = this.spreadsheet.getSheetByName(this.sheetName);
       this.id = this.spreadsheet.getId();
       this.sheet.getRange(1, 1, 1, 2).setValues([['Output', 'Date']]);
+      this.init();
     }
 
     open() {
       this.spreadsheet = SpreadsheetApp.openById(this.id);
       this.sheet = this.spreadsheet.getSheetByName(this.sheetName);
       this.id = this.spreadsheet.getId();
+      this.init();
+    }
+    
+    init () {
+      this.sheet.getRange(2, 1, 1, 2).setBorder(true, null, null, null, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID);
     }
 
     prepend(text) {

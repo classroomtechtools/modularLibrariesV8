@@ -36,6 +36,17 @@
 
   // This will replace Logger. If set to false, you'll have to initialize the library with call to ReplaceLogger()
   const auto = true;
+  
+  function _getErrorObject(){
+    try { throw new Error('fake error') } catch(err) { return err; }
+  }
+  
+  function _getLineNumOfCallee() {
+    const err = _getErrorObject();
+    const caller_line = err.stack.split("\n")[5];
+    const index = caller_line.indexOf("at ");
+    return '→ ' + caller_line.slice(index+3, caller_line.length);
+  }
 
   class SS {
     constructor (id=null, sheetName) {
@@ -53,25 +64,37 @@
       this.spreadsheet = SpreadsheetApp.create('Logger', rows, cols);
       this.sheet = this.spreadsheet.getSheetByName(this.sheetName);
       this.id = this.spreadsheet.getId();
-      this.sheet.getRange(1, 1, 1, 2).setValues([['Output', 'Date']]);
-      this.init();
+      this.sheet.getRange(1, 1, 1, 3).setValues([['Output', 'Date', 'Location']]);
+      this.first();
     }
 
     open() {
       this.spreadsheet = SpreadsheetApp.openById(this.id);
       this.sheet = this.spreadsheet.getSheetByName(this.sheetName);
       this.id = this.spreadsheet.getId();
-      this.init();
+      this.first();
     }
     
-    init () {
-      this.sheet.getRange(2, 1, 1, 2).setBorder(true, null, null, null, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID);
+    first () {
+      // draw a line whenever we've opened the file
+      this.sheet.getRange(2, 1, 1, 3).setBorder(true, null, null, null, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID);
     }
 
     prepend(text) {
-      const data = [
-        [JSON.stringify(text, null, 4), (new Date()).toISOString()]
-      ];
+      // first column of row should contain plaintext, or stringified version of itself
+      const cell_a = (function (txt) {
+        if (text instanceof String || typeof text === 'string')
+          return text;
+        else 
+          return JSON.stringify(text, null, 4);
+      })(text);  
+
+      // second column of row should contain date in easy to read format
+      const cell_b = (new Date()).toLocaleString();
+      const cell_c = _getLineNumOfCallee();
+      
+      const data = [ [cell_a, cell_b, cell_c] ];
+      
       this.sheet.insertRowsAfter(1, data.length);
       this.sheet.getRange(2, 1, data.length, data[0].length).setValues(data);
     }

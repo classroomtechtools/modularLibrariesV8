@@ -11,7 +11,7 @@
 
  1) Requires V8 runtime
  2) Copy and paste code into project
- 3) When auto is true, Logger.log will go to spreadsheet instead, much quicker
+ 3) When auto is true (default), Logger.log will go to spreadsheet instead, much quicker
     * optionally set auto to false and use ReplaceLogger()
  4) View the log which will output the url of the spreadsheet created / used
  5) Same spreadsheet is reused on suqsequent runs
@@ -37,15 +37,22 @@
   // This will replace Logger. If set to false, you'll have to initialize the library with call to ReplaceLogger()
   const auto = true;
   
+  // If for some reason you want to use a different spreadsheet each time, or for just one execution, can set reset to true
+  const reset = false;
+  
+  // Shouldn't need to change this
+  const PROP = '__getLogger__.id';
+  const PROPSERVICE = PropertiesService.getUserProperties;
+  
   function _getErrorObject(){
     try { throw new Error('fake error') } catch(err) { return err; }
   }
   
   function _getLineNumOfCallee() {
     const err = _getErrorObject();
-    const caller_line = err.stack.split("\n")[5];
-    const index = caller_line.indexOf("at ");
-    return '→ ' + caller_line.slice(index+3, caller_line.length);
+    const target_stack = err.stack.split("\n").slice(5);  // 5 because that's where it is in the stack
+    //const index = caller_line.indexOf("at ");
+    return '→ ' + target_stack.join("\n");
   }
 
   class SS {
@@ -58,13 +65,17 @@
       else
         this.open();
     }
+    
+    static new (...args) {
+      return new SS(...args);
+    }
 
     create() {
       const [rows, cols] = [3, 2];
       this.spreadsheet = SpreadsheetApp.create('Logger', rows, cols);
       this.sheet = this.spreadsheet.getSheetByName(this.sheetName);
       this.id = this.spreadsheet.getId();
-      this.sheet.getRange(1, 1, 1, 3).setValues([['Output', 'Date', 'Location']]);
+      this.sheet.getRange(1, 1, 1, 3).setValues([['Output', 'Location', 'Date']]);
       this.first();
     }
 
@@ -89,9 +100,10 @@
           return JSON.stringify(text, null, 4);
       })(text);  
 
+      const cell_b = _getLineNumOfCallee();
+      
       // second column of row should contain date in easy to read format
-      const cell_b = (new Date()).toLocaleString();
-      const cell_c = _getLineNumOfCallee();
+      const cell_c = (new Date()).toLocaleString();
       
       const data = [ [cell_a, cell_b, cell_c] ];
       
@@ -122,18 +134,18 @@
     [state.id, state.sheet] = [id, sheet];
 
     if (state.id === null) {
-      // pull in from properties, if avialable, remains null if not
-      const props = PropertiesService.getUserProperties();
-      state.id = props.getProperty('__getLogger__.id');
+      // pull in from properties, if available, remains null if not
+      const props = PROPSERVICE();
+      state.id = props.getProperty(PROP);
     }
 
     // either opens existing or creates new
-    ssObj = new SS(state.id, state.sheet);
+    ssObj = SS.new(state.id, state.sheet);
 
     if (state.id === null) {
       state.id = ssObj.id;
-      const props = PropertiesService.getUserProperties();
-      props.setProperty('__getLogger__.id', state.id);
+      const props = PROPSERVICE();
+      props.setProperty(PROP, state.id);
     }
 
     // Output with link
@@ -145,6 +157,10 @@
   __g__.UnreplaceLogger = function () {
     __g__.Logger = __Logger__;
   };
+  
+  if (reset) {
+    PROPSERVICE().deleteProperty(PROP);
+  }
 
   if (auto) ReplaceLogger();
 })(this);
